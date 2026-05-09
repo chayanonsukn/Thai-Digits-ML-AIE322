@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}หน้าสำหรับผู้ใช้ - Thai Digits ML{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>ทายผลและเก็บข้อมูลตัวเลขไทย</h2>
+    <p class="subtitle">เลือกระบบที่ต้องการใช้งาน</p>
+    
+    <div class="tab-container">
+        <button class="tab-btn active" onclick="switchMode('predict')">
+            <i class="fas fa-brain"></i> ทดสอบโมเดล
+        </button>
+        <button class="tab-btn" onclick="switchMode('collect')">
+            <i class="fas fa-pen"></i> เก็บข้อมูล
+        </button>
+    </div>
+
+    <!-- Collect Mode Options -->
+    <div id="collect-options" style="display: none; width: 100%; margin-bottom: 20px;">
+        <div class="select-wrapper" style="margin-bottom: 0;">
+            <select id="digit-label">
+                <option value="65">๖๕ (65)</option>
+                <option value="66">๖๖ (66)</option>
+                <option value="67">๖๗ (67)</option>
+                <option value="68">๖๘ (68)</option>
+                <option value="69">๖๙ (69)</option>
+                <option value="70">๗๐ (70)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas" width="280" height="280"></canvas>
+    </div>
+
+    <div class="controls">
+        <button class="btn-clear" onclick="clearCanvas()">
+            <i class="fas fa-eraser"></i> <span>ล้างหน้าจอ</span>
+        </button>
+        
+        <button id="btn-predict-action" class="btn-predict" onclick="predictDigit()">
+            <i class="fas fa-magic"></i> <span>ทายตัวเลข</span>
+        </button>
+
+        <button id="btn-collect-action" class="btn-save" onclick="saveSample()" style="display: none;">
+            <i class="fas fa-save"></i> <span>บันทึกรูป</span>
+        </button>
+    </div>
+    
+    <div id="prediction-result" class="prediction-box" style="display: none;">
+        <h3>AI ทายว่าเป็นเลข: <span id="pred-number">-</span></h3>
+        <p id="pred-confidence" style="color: gray; font-size: 0.95em; margin-top: 8px; font-weight: normal;"></p>
+    </div>
+    
+    <div id="message"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+{% endblock %}
