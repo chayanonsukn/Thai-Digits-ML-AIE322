@@ -1,0 +1,17 @@
+# Ignore Python cache and environment files
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Ignore temporary uploaded model file
+active_model.joblib
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

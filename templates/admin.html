@@ -48,29 +48,38 @@
         }
     });
 
+    // ฟังก์ชันแปลงข้อมูลโมเดลให้เป็น HTML และแสดงผล
+    function renderModelInfo(data) {
+        const infoDiv = document.getElementById('model-info-content');
+        if (!data) {
+            infoDiv.innerHTML = `<p style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ไม่สามารถดึงข้อมูลโมเดลได้</p>`;
+            return;
+        }
+        infoDiv.innerHTML = `
+            <p><i class="fas fa-table" style="color: var(--text-muted); width: 20px;"></i> <strong>จำนวนฟีเจอร์ (Input Features):</strong> ${data.features} <span style="font-size: 0.9em; color: gray;">(มาจากภาพ 8x8 = 64 พิกเซล)</span></p>
+            <p><i class="fas fa-tags" style="color: var(--text-muted); width: 20px;"></i> <strong>ตัวเลขที่รองรับ (Target Classes):</strong> ${Array.isArray(data.classes) ? data.classes.join(', ') : data.classes}</p>
+            <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
+            <p><i class="fas fa-brain" style="color: var(--primary-gold); width: 20px;"></i> <strong>ชนิดอัลกอริทึม (Algorithm):</strong> <span style="color: ${data.algorithm === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'}; font-weight: bold;">${data.algorithm}</span></p>
+            <p><i class="fas fa-bullseye" style="color: var(--primary-gold); width: 20px;"></i> <strong>ความแม่นยำ (Accuracy):</strong> <span style="color: ${data.accuracy === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#198754'}; font-weight: bold;">${data.accuracy}</span></p>
+            <p><i class="fas fa-users" style="color: var(--primary-gold); width: 20px;"></i> <strong>จำนวนข้อมูลที่ใช้สอน (Training Samples):</strong> <span style="color: ${data.training_samples === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'};">${data.training_samples}</span></p>
+            <p><i class="fas fa-calendar-alt" style="color: var(--primary-gold); width: 20px;"></i> <strong>วันที่เทรน (Training Date):</strong> <span style="color: ${data.training_date === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'};">${data.training_date}</span></p>
+        `;
+    }
+
     // ฟังก์ชันดึงข้อมูลโมเดลจาก Backend
     async function fetchModelInfo() {
-        const infoDiv = document.getElementById('model-info-content');
         try {
-            const response = await fetch('/api/model-info');
+            // ใส่ cache: 'no-store' เพื่อป้องกันเว็บบราวเซอร์จำค่าเก่า (Caching)
+            const response = await fetch('/api/model-info', { cache: 'no-store' });
             const result = await response.json();
             
             if (result.status === 'success') {
-                const data = result.data;
-                infoDiv.innerHTML = `
-                    <p><i class="fas fa-table" style="color: var(--text-muted); width: 20px;"></i> <strong>จำนวนฟีเจอร์ (Input Features):</strong> ${data.features} <span style="font-size: 0.9em; color: gray;">(มาจากภาพ 8x8 = 64 พิกเซล)</span></p>
-                    <p><i class="fas fa-tags" style="color: var(--text-muted); width: 20px;"></i> <strong>ตัวเลขที่รองรับ (Target Classes):</strong> ${data.classes.join(', ')}</p>
-                    <hr style="border: 0; height: 1px; background: #eee; margin: 15px 0;">
-                    <p><i class="fas fa-brain" style="color: var(--primary-gold); width: 20px;"></i> <strong>ชนิดอัลกอริทึม (Algorithm):</strong> <span style="color: ${data.algorithm === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'}; font-weight: bold;">${data.algorithm}</span></p>
-                    <p><i class="fas fa-bullseye" style="color: var(--primary-gold); width: 20px;"></i> <strong>ความแม่นยำ (Accuracy):</strong> <span style="color: ${data.accuracy === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#198754'}; font-weight: bold;">${data.accuracy}</span></p>
-                    <p><i class="fas fa-users" style="color: var(--primary-gold); width: 20px;"></i> <strong>จำนวนข้อมูลที่ใช้สอน (Training Samples):</strong> <span style="color: ${data.training_samples === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'};">${data.training_samples}</span></p>
-                    <p><i class="fas fa-calendar-alt" style="color: var(--primary-gold); width: 20px;"></i> <strong>วันที่เทรน (Training Date):</strong> <span style="color: ${data.training_date === 'ไม่มีข้อมูล' ? 'var(--text-muted)' : '#333'};">${data.training_date}</span></p>
-                `;
+                renderModelInfo(result.data);
             } else {
-                infoDiv.innerHTML = `<p style="color: #dc3545;"><i class="fas fa-exclamation-triangle"></i> ${result.message}</p>`;
+                renderModelInfo(null);
             }
         } catch (error) {
-            infoDiv.innerHTML = `<p style="color: #dc3545;"><i class="fas fa-wifi"></i> ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้</p>`;
+            renderModelInfo(null);
         }
     }
 
@@ -85,7 +94,7 @@
         const submitBtn = this.querySelector('button');
         
         if (fileInput.files.length === 0) {
-            statusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> กรุณาเลือกไฟล์ก่อนครับ';
+            statusText.innerHTML = '<i class="fas fa-exclamation-circle"></i> กรุณาเลือกไฟล์ก่อนดำเนินการ';
             statusText.style.color = "#dc3545";
             return;
         }
@@ -109,13 +118,19 @@
             if (result.status === 'success') {
                 statusText.innerHTML = '<i class="fas fa-check-circle"></i> ' + result.message;
                 statusText.style.color = "#198754";
-                
+
                 // เคลียร์ช่องเลือกไฟล์ให้กลับเป็นสภาพเดิม
                 fileInput.value = ""; 
                 fileNameLabel.innerHTML = 'คลิกเพื่อเลือกไฟล์ .joblib ของคุณ';
                 document.querySelector('label[for="model-file"]').style.borderStyle = 'dashed';
 
-                fetchModelInfo(); // สั่งให้อัปเดตข้อมูลโมเดลใหม่ทันที
+                // ถ้าฝั่งเซิร์ฟเวอร์ส่งข้อมูลโมเดลกลับมาพร้อมกัน ให้ใช้ข้อมูลนั้นอัปเดต UI ทันที
+                if (result.data) {
+                    renderModelInfo(result.data);
+                } else {
+                    // ถ้าไม่มี ให้ดึงข้อมูลจาก API อีกครั้ง (fallback)
+                    fetchModelInfo();
+                }
             } else {
                 statusText.innerHTML = '<i class="fas fa-times-circle"></i> เกิดข้อผิดพลาด: ' + result.message;
                 statusText.style.color = "#dc3545";

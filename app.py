@@ -167,16 +167,42 @@ def upload_model():
          return jsonify({'status': 'error', 'message': 'กรุณาอัปโหลดไฟล์นามสกุล .joblib เท่านั้น'}), 400
          
     try:
-        # 1. บันทึกไฟล์ทับของเดิม (ผ่าตัดเปลี่ยนสมอง)
-        file.save(MODEL_PATH)
+        # 1. บันทึกไฟล์ที่อัปโหลดเป็นชื่อใหม่ เพื่อไม่ให้ทับไฟล์ต้นฉบับของผู้ใช้
+        UPLOAD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'active_model.joblib')
+        file.save(UPLOAD_PATH)
         
         # 2. โหลดโมเดลใหม่เข้าสู่ระบบทันที (ฟื้นคืนชีพโดยไม่ต้อง Restart)
-        model = joblib.load(MODEL_PATH)
-        
-        return jsonify({'status': 'success', 'message': 'อัปโหลดและโหลดโมเดลใหม่สำเร็จ!'})
+        model = joblib.load(UPLOAD_PATH)
+        # เตรียมข้อมูลโมเดลกลับไปให้ frontend ใช้อัปเดต UI ทันที
+        try:
+            n_features = getattr(model, 'n_features_in_', 'ไม่ทราบ')
+            classes = getattr(model, 'classes_', []).tolist() if hasattr(model, 'classes_') else []
+            model_type = getattr(model, 'algorithm_name_', 'ไม่มีข้อมูล')
+            accuracy = getattr(model, 'test_accuracy_', 'ไม่มีข้อมูล')
+            training_date = getattr(model, 'training_date_', 'ไม่มีข้อมูล')
+            training_samples = getattr(model, 'training_samples_', 'ไม่มีข้อมูล')
+            model_info = {
+                'algorithm': model_type,
+                'features': n_features,
+                'classes': classes,
+                'accuracy': accuracy,
+                'training_date': training_date,
+                'training_samples': training_samples
+            }
+        except Exception:
+            model_info = None
+
+        print('✅ Model reloaded from upload:', MODEL_PATH)
+
+        return jsonify({'status': 'success', 'message': 'อัปโหลดและโหลดโมเดลใหม่สำเร็จ!', 'data': model_info})
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'เกิดข้อผิดพลาด: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    # รันบน port 5000
-    app.run(debug=True, port=5000)
+    # รันบนพอร์ตที่กำหนดโดยตัวแปรสภาพแวดล้อม `PORT` (ค่าเริ่มต้น 5000)
+    try:
+        port = int(os.environ.get('PORT', '5000'))
+    except Exception:
+        port = 5000
+    # ปิด reloader เพื่อให้แอปทำงานเป็นกระบวนการเดียว (อัปเดตโมเดลจะมีผลทันที)
+    app.run(debug=True, port=port, use_reloader=False, threaded=True)
